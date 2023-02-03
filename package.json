@@ -1,0 +1,33 @@
+{
+  "name": "apisearchfreelance",
+  "version": "1.0.0",
+  "description": "Une api pour une app dans lequel un utilisateur peut chercher une mission en freelance et poster des missions pour chercher des freelances",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/okabasele/apiSearchFreelance.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/okabasele/apiSearchFreelance/issues"
+  },
+  "homepage": "https://github.com/okabasele/apiSearchFreelance#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-validator": "^6.14.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^6.7.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.20.7",
+    "@babel/core": "^7.20.7",
+    "@babel/preset-env": "^7.20.2",
+    "nodemon": "^2.0.20"
+  }
+}
