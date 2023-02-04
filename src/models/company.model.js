@@ -15,8 +15,8 @@ const companySchema = mongoose.Schema(
       maxLength: 9,
       require: true,
     },
-    missionsRef: [{ type: mongoose.Schema.Types.ObjectId, ref: "missions" }],
-    userRef: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    missions: [{ type: mongoose.Schema.Types.ObjectId, ref: "missions" }],
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
   },
   { timestamps: true }
 );

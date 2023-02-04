@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const bcrypt = require("bcrypt");
 const userSchema = mongoose.Schema(
   {
     firstname: {
@@ -35,7 +35,6 @@ const userSchema = mongoose.Schema(
       require: true,
       lowercase: true,
       unique: true,
-      maxLength: 50,
     },
     password: {
       type: String,
@@ -51,8 +50,7 @@ const userSchema = mongoose.Schema(
 );
 
 //A chaque fois qu'on effectue la fonction save, avant la mise en BDD
-userSchema.pre('save', function (next) {
-  
+userSchema.pre("save", function (next) {
   if (!this.isModified("password")) {
     return next();
   }
@@ -62,10 +60,9 @@ userSchema.pre('save', function (next) {
       console.log(err);
       return next(err);
     }
-    this.password = hashedPassword
+    this.password = hashedPassword;
     next();
   });
-
-})
+});
 
 module.exports = mongoose.model("user", userSchema);

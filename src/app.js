@@ -1,17 +1,23 @@
-const express = require('express');
+require('dotenv').config();
+const express = require("express");
 const app = express();
+const mongoose = require("mongoose");
 const apiRouter = require('./routes');
-const { port } = require('./utils/env')
 const errorHandler = require("./middlewares/errorHandling");
-
 app.use(express.json());
 app.use('/api/v1', apiRouter);
 app.use(errorHandler);
 
+const port = process.env.PORT;
+const mongodb_user = process.env.MONGODB_USER;
+const mongodb_password = process.env.MONGODB_PASSWORD;
+const mongodb_cluster = process.env.MONGODB_CLUSTER;
+
 //CONNEXION A LA BDD
+mongoose.set('strictQuery', true);
 mongoose
   .connect(
-    `${process.env.MONGODB_USER}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_CLUSTER}.c81utqm.mongodb.net/?retryWrites=true&w=majority`
+    `mongodb://${mongodb_user}:${mongodb_password}@${mongodb_cluster}/search-freelance?ssl=true&replicaSet=atlas-br7i0r-shard-0&authSource=admin&retryWrites=true&w=majority`
   )
   .then(() => {
     console.log("successfully connected to database");
@@ -20,10 +26,10 @@ mongoose
 
 //Démarrer le serveur sur un port d'écoute
 app.listen(
-    //PORT
-    process.env.PORT,
-    //CALLBACK APPELER AU LANCEMENT POUR VERIFIER QUE LE SERVEUR TOURNE
-    () => {
-        console.log('Serveur launch');
-    }
+  //PORT
+  port,
+  //CALLBACK APPELER AU LANCEMENT POUR VERIFIER QUE LE SERVEUR TOURNE
+  () => {
+    console.log("Serveur launch");
+  }
 );

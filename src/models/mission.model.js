@@ -10,7 +10,7 @@ const missionSchema = mongoose.Schema(
       type: Date,
       require: true,
     },
-    salary: {
+    totalWage: {
       type: Number,
       require: true,
     },
@@ -22,12 +22,15 @@ const missionSchema = mongoose.Schema(
       type: String,
       require: true,
     },
-    status: {
-      type: String,
+    isOpen: {
+      type: Boolean,
       require: true,
+      default: true,
+
     },
-    skillsRef: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
-    jobRef: { type: mongoose.Schema.Types.ObjectId, ref: "jobs" },
+    candidates:[{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
+    skills: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
+    job: { type: mongoose.Schema.Types.ObjectId, ref: "jobs" },
   },
   { timestamps: true }
 );

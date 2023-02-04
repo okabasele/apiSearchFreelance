@@ -4,7 +4,8 @@
   "description": "Une api pour une app dans lequel un utilisateur peut chercher une mission en freelance et poster des missions pour chercher des freelances",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev":"nodemon ./src/app.js"
   },
   "repository": {
     "type": "git",

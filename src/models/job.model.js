@@ -6,7 +6,7 @@ const jobSchema = mongoose.Schema(
       type: String,
       require: true,
     },
-    skillsRef: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
+    skills: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
   },
   { timestamps: true }
 );
