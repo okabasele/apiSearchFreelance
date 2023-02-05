@@ -12,10 +12,11 @@ const companySchema = mongoose.Schema(
     },
     siret: {
       type: String,
-      maxLength: 9,
       require: true,
     },
-    missions: [{ type: mongoose.Schema.Types.ObjectId, ref: "missions" }],
+    missions: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "missions", default: [] },
+    ],
     user: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
   },
   { timestamps: true }

@@ -12,8 +12,17 @@ exports.checkIdentity = [
 exports.checkPassword = [
   body('password')
     .notEmpty()
-    .isLength({ min: 8, max: 30 })
+    .isLength({ min: 8})
     .matches(/^[A-Za-z0-9 .,'!&(§è!çà)]+$/)
+    .withMessage("Password should be at least 8 characters long.")
+]
+
+exports.checkSiret = [
+  body('siret')
+    .notEmpty()
+    .isLength({ min: 9, max: 9 })
+    .isNumeric()
+    .withMessage("Siret should have 9 numbers")
 ]
 
 
