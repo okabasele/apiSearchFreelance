@@ -2,6 +2,7 @@ const Company = require("../models/company.model");
 const Mission = require("../models/mission.model");
 const Job = require("../models/job.model");
 const Skill = require("../models/skill.model");
+const Freelance = require("../models/freelance.model");
 
 exports.createMission = async (req, res, next) => {
   try {
@@ -50,13 +51,61 @@ exports.createMission = async (req, res, next) => {
   }
 };
 
-exports.addCandidateToMission = async (req, res, next) => {
+exports.addCandidatesToMission = async (req, res, next) => {
   try {
-    //Verifier l'id de l'utilisateur
+    //Verifier que la mission existe
+    const foundMission = await Mission.findById(req.params.id);
+    if (!foundMission){
+      return next(new Error(`Mission with id ${req.params.id} does not exist.`));
+    }
     //Verifier que la mission est ouverte
-    //Verifier si le tableau candidate n'est pas à 3
-    //Si oui on renvoie une erreur
-    //Sinon on ajoute l'id de l'utilisateur
+    if (!foundMission.isOpen){
+      return next(new Error(`Mission with id ${req.params.id} is closed.`));     
+    }
+
+    
+    //Créer un Set avec des id uniques pour éviter les doublons
+    const uniqueCandidatesIdsSet = new Set(req.body.candidates);
+    const uniqueCandidatesIds = Array.from(uniqueCandidatesIdsSet);
+
+    //Verifier s'il y a de la place dans la mission
+    const availablePlace = 3- foundMission.candidates.length;    
+
+    //Verifier si le tableau candidates n'est pas à 3
+    if (uniqueCandidatesIds.length > availablePlace){
+      return next(new Error(`Mission with id ${req.params.id} only have ${availablePlace} remaining applications.`));     
+
+    }
+
+    //Verifier les candidats deja presents dans la mission
+    const candidatesAlreadyInMission = []
+   const isCandidatAlreadyInMission = foundMission.candidates.some((candidateId)=> {
+    const isAlreadyInMission = uniqueCandidatesIds.includes(candidateId.toString()) 
+    if(isAlreadyInMission) {
+      candidatesAlreadyInMission.push(candidateId.toString())
+    }
+    return isAlreadyInMission
+   })
+    if (isCandidatAlreadyInMission) {
+      return next(new Error(`Mission with id ${req.params.id} already have the candidates ${candidatesAlreadyInMission.join(' and ')}.`));     
+    }
+    //Verifier le tableau d'id user des freelances a ajouter
+    const candidatesPromises = uniqueCandidatesIds.map(async (freelanceId) => {
+      try {
+        const foundFreelance = await Freelance.findById(freelanceId);
+        if (!foundFreelance) {
+          throw new Error(`freelance with id ${freelanceId} does not exist.`);
+        }
+        return foundFreelance._id;
+      } catch (error) {
+        throw error;
+      }
+    });
+
+    const foundFreelances = await Promise.all(candidatesPromises);
+    foundMission.candidates = foundFreelances;
+    await foundMission.save();
+    res.send(foundMission)
   } catch (error) {
     next(error);
   }
