@@ -4,7 +4,7 @@ dotenv.config();
 
 function verifyToken(req, res, next) {
   //récupérer le token
-  let token = req.headers.authorization;
+  const [,token] = req.headers.authorization.split(' ');
 
   //si pas de token : erreur 404
   if (!token) {
@@ -16,6 +16,7 @@ function verifyToken(req, res, next) {
   jwt.verify(token, process.env.TOKEN_SECRET, (error, jwtDecoded) => {
     //si verification echoue : erreur 401, token invalide
     if (error) {
+      console.log({token,error})
       return res
         .status(401)
         .send({ auth: false, token: null, message: "Not autorized" });

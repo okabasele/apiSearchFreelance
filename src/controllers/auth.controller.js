@@ -1,7 +1,13 @@
 const User = require("../models/user.model");
 const Company = require("../models/company.model");
 const bcrypt = require("bcrypt");
-var jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+
+const Roles = {
+Freelance: "freelance",
+Company: "company",
+Admin: "admin"
+}
 
 exports.login = async (req, res, next) => {
   try {
@@ -17,14 +23,14 @@ exports.login = async (req, res, next) => {
     }
 
     //Savoir si l'utilisateur est une entreprise ou un freelance
-    var role = "";
+    let role = "";
     const foundCompany = await Company.findOne({ user: foundUser._id });
     if (foundUser.isAdmin) {
-      role = "admin";
+      role = Roles.Admin;
     } else if (foundCompany) {
-      role = "company";
+      role = Roles.Company;
     } else {
-      role = "freelance";
+      role = Roles.Freelance;
     }
 
     //Si l'utilisateur existe on déchiffre le mot de passe

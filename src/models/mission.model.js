@@ -26,9 +26,10 @@ const missionSchema = mongoose.Schema(
       type: Boolean,
       require: true,
       default: true,
-
     },
-    candidates:[{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
+    candidates: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "users", default: [] },
+    ],
     skills: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
     job: { type: mongoose.Schema.Types.ObjectId, ref: "jobs" },
   },
