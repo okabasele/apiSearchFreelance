@@ -20,7 +20,7 @@ router.post(
   validation,
   companyController.register
 );
-router.get("/all",companyController.getAllCompanies);
+router.get("/all",[verifyToken],companyController.getAllCompanies);
 router.get("/:id",[verifyToken],companyController.getCompany);
 router.patch("/:id",[verifyToken, verifyIsCompany],companyController.updateCompany);
 router.delete("/:id",[verifyToken, verifyIsCompany],companyController.deleteCompany);

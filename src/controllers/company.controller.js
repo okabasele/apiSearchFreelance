@@ -62,7 +62,8 @@ exports.getCompany = async (req, res, next) => {
 
 exports.updateCompany = async (req, res, next) => {
   try {
-    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+    const foundCompany = await Company.findById(req.params.id);
+    if (!req.userToken.isAdmin && req.userToken.id !== foundCompany.user._id) {
       return next(new Error("Not authorized."));
     }
     const updatedCompany = await Company.findByIdAndUpdate(
@@ -80,7 +81,8 @@ exports.updateCompany = async (req, res, next) => {
 
 exports.deleteCompany = async (req, res, next) => {
   try {
-    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+    const foundCompany = await Company.findById(req.params.id);
+    if (!req.userToken.isAdmin && req.userToken.id !== foundCompany.user._id) {
       return next(new Error("Not authorized."));
     }
     const deletedCompany = await Company.findByIdAndDelete(req.params.id);
