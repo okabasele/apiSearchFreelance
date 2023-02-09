@@ -35,3 +35,61 @@ exports.register = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.getAllCompanies = async (req, res, next) => {
+  try {
+    const allCompanies = await Company.find().populate({
+      path: "user",
+      select: ["firstname", "lastname", "city"],
+    });
+    return res.send(allCompanies);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getCompany = async (req, res, next) => {
+  try {
+    const foundCompany = await Company.findById(req.params.id);
+    if (!foundCompany) {
+      return next(new Error("User not found"));
+    }
+    res.send(foundCompany);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateCompany = async (req, res, next) => {
+  try {
+    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+      return next(new Error("Not authorized."));
+    }
+    const updatedCompany = await Company.findByIdAndUpdate(
+      req.params.id,
+      req.body
+    );
+    if (!updatedCompany) {
+      return next(new Error("User not found"));
+    }
+    res.send(updatedCompany);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteCompany = async (req, res, next) => {
+  try {
+    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+      return next(new Error("Not authorized."));
+    }
+    const deletedCompany = await Company.findByIdAndDelete(req.params.id);
+    if (!deletedCompany) {
+      return next(new Error("User not found"));
+    }
+    const deletedUser = await User.findByIdAndDelete(deletedCompany.user._id);
+    res.send({ deletedCompany, deletedUser });
+  } catch (error) {
+    return next(error);
+  }
+};
