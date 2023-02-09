@@ -144,7 +144,97 @@ exports.closeMission = async (req, res, next) => {
     }
     foundMission.isOpen = false;
     await foundMission.save();
-    return res.send({message:`Mission with id ${req.params.id} is closed successfully.`, mission:foundMission});
+    return res.send({
+      message: `Mission with id ${req.params.id} is closed successfully.`,
+      mission: foundMission,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getAllMissions = async (req, res, next) => {
+  try {
+    const allMisions = await Mision.find()
+      .populate({ path: "skills", select: "name" })
+      .populate({ path: "job", select: "name" })
+      .populate({ path: "candidates", select: ["firstname", "lastname"] });
+    return res.send(allMisions);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getMission = async (req, res, next) => {
+  try {
+    //Recuperer l'entreprise qui a crée la mission
+    const foundCompany = await Company.findOne().populate({
+      path: "missions",
+      select: "_id",
+      match: { _id: { $eq: req.params.id } },
+    });
+    //Si c'est pas l'admin ou l'entreprise qui a crée la mission on renvoie une erreur
+    if (
+      !req.userToken.isAdmin &&
+      foundCompany.user._id.toString() !== req.userToken.id
+    ) {
+      return next(new Error("Not authorized."));
+    }
+    const foundMission = await Mission.findById(req.params.id);
+    if (!foundMission) {
+      return next(new Error("Mission not found"));
+    }
+    res.send(foundMission);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateMission = async (req, res, next) => {
+  try {
+    //Recuperer l'entreprise qui a crée la mission
+    const foundCompany = await Company.findOne().populate({
+      path: "missions",
+      select: "_id",
+      match: { _id: { $eq: req.params.id } },
+    });
+    //Si c'est pas l'admin ou l'entreprise qui a crée la mission on renvoie une erreur
+    if (
+      !req.userToken.isAdmin &&
+      foundCompany.user._id.toString() !== req.userToken.id
+    ) {
+      return next(new Error("Not authorized."));
+    }
+    const updatedMission = await foundMission.update(req.params.id, req.body);
+    if (!updatedMission) {
+      return next(new Error("Mission not found"));
+    }
+    res.send(updatedMission);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteMission = async (req, res, next) => {
+  try {
+    //Recuperer l'entreprise qui a crée la mission
+    const foundCompany = await Company.findOne().populate({
+      path: "missions",
+      select: "_id",
+      match: { _id: { $eq: req.params.id } },
+    });
+    //Si c'est pas l'admin ou l'entreprise qui a crée la mission on renvoie une erreur
+    if (
+      !req.userToken.isAdmin &&
+      foundCompany.user._id.toString() !== req.userToken.id
+    ) {
+      return next(new Error("Not authorized."));
+    }
+    const deletedMission = await Mission.findByIdAndDelete(req.params.id);
+    if (!deletedMission) {
+      return next(new Error("Mission not found"));
+    }
+    res.send({ deletedMission });
   } catch (error) {
     return next(error);
   }
