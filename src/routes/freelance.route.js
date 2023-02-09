@@ -17,4 +17,7 @@ router.post(
   freelanceController.register
 );
 
+router.get("/all",freelanceController.getAllFreelances);
+router.post("/filter",freelanceController.filterFreelances);
+
 module.exports = router;

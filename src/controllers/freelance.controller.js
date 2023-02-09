@@ -56,3 +56,44 @@ exports.register = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.getAllFreelances = async (req, res, next) => {
+  try {
+    const allFreelances = await Freelance.find()
+      .populate({ path: "skills", select: "name" })
+      .populate({ path: "job", select: "name" })
+      .populate({ path: "user", select: ["firstname", "lastname", "city"] });
+    return res.send(allFreelances);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.filterFreelances = async (req, res, next) => {
+  try {
+    const filterArray = req.body.search.toLowerCase().split(" ");
+
+    //Récuperer que les champs utiles
+    const allFreelances = await Freelance.find()
+      .populate({ path: "skills", select: "name" })
+      .populate({ path: "job", select: "name" })
+      .populate({ path: "user", select: ["firstname", "lastname", "city"] });
+
+    //Appliquer le filtre
+    const filteredFreelances = allFreelances.filter((freelance) => {
+      // console.log(freelance.skills.map(skill => skill.name).join(' '))
+      return (
+        filterArray &&
+        (
+          filterArray.includes(freelance.skills.map(skill => skill.name).join(' ')) ||
+          filterArray.includes(freelance.job.name) ||
+          filterArray.includes(freelance.user.firstname) ||
+          filterArray.includes(freelance.user.lastname) ||
+          filterArray.includes(freelance.user.city))
+      );
+    });
+    res.send(filteredFreelances);
+  } catch (error) {
+    return next(error);
+  }
+};
