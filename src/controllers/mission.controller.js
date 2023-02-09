@@ -55,39 +55,55 @@ exports.addCandidatesToMission = async (req, res, next) => {
   try {
     //Verifier que la mission existe
     const foundMission = await Mission.findById(req.params.id);
-    if (!foundMission){
-      return next(new Error(`Mission with id ${req.params.id} does not exist.`));
+    if (!foundMission) {
+      return next(
+        new Error(`Mission with id ${req.params.id} does not exist.`)
+      );
     }
     //Verifier que la mission est ouverte
-    if (!foundMission.isOpen){
-      return next(new Error(`Mission with id ${req.params.id} is closed.`));     
+    if (!foundMission.isOpen) {
+      return next(new Error(`Mission with id ${req.params.id} is closed.`));
     }
 
-    
     //Créer un Set avec des id uniques pour éviter les doublons
     const uniqueCandidatesIdsSet = new Set(req.body.candidates);
     const uniqueCandidatesIds = Array.from(uniqueCandidatesIdsSet);
 
     //Verifier s'il y a de la place dans la mission
-    const availablePlace = 3- foundMission.candidates.length;    
+    const availablePlace = 3 - foundMission.candidates.length;
 
     //Verifier si le tableau candidates n'est pas à 3
-    if (uniqueCandidatesIds.length > availablePlace){
-      return next(new Error(`Mission with id ${req.params.id} only have ${availablePlace} remaining applications.`));     
-
+    if (uniqueCandidatesIds.length > availablePlace) {
+      return next(
+        new Error(
+          `Mission with id ${req.params.id} only have ${availablePlace} remaining applications.`
+        )
+      );
     }
 
     //Verifier les candidats deja presents dans la mission
-    const candidatesAlreadyInMission = []
-   const isCandidatAlreadyInMission = foundMission.candidates.some((candidateId)=> {
-    const isAlreadyInMission = uniqueCandidatesIds.includes(candidateId.toString()) 
-    if(isAlreadyInMission) {
-      candidatesAlreadyInMission.push(candidateId.toString())
-    }
-    return isAlreadyInMission
-   })
+    const candidatesAlreadyInMission = [];
+    const isCandidatAlreadyInMission = foundMission.candidates.some(
+      (candidateId) => {
+        const isAlreadyInMission = uniqueCandidatesIds.includes(
+          candidateId.toString()
+        );
+        if (isAlreadyInMission) {
+          candidatesAlreadyInMission.push(candidateId.toString());
+        }
+        return isAlreadyInMission;
+      }
+    );
     if (isCandidatAlreadyInMission) {
-      return next(new Error(`Mission with id ${req.params.id} already have the candidates ${candidatesAlreadyInMission.join(' and ')}.`));     
+      return next(
+        new Error(
+          `Mission with id ${
+            req.params.id
+          } already have the candidates ${candidatesAlreadyInMission.join(
+            " and "
+          )}.`
+        )
+      );
     }
     //Verifier le tableau d'id user des freelances a ajouter
     const candidatesPromises = uniqueCandidatesIds.map(async (freelanceId) => {
@@ -105,8 +121,31 @@ exports.addCandidatesToMission = async (req, res, next) => {
     const foundFreelances = await Promise.all(candidatesPromises);
     foundMission.candidates = foundFreelances;
     await foundMission.save();
-    res.send(foundMission)
+    res.send(foundMission);
   } catch (error) {
     next(error);
+  }
+};
+
+exports.closeMission = async (req, res, next) => {
+  try {
+    //Verifier que la mission existe
+    const foundMission = await Mission.findById(req.params.id);
+    if (!foundMission) {
+      return next(
+        new Error(`Mission with id ${req.params.id} does not exist.`)
+      );
+    }
+    //Verifier que la mission est ouverte
+    if (!foundMission.isOpen) {
+      return next(
+        new Error(`Mission with id ${req.params.id} is already closed.`)
+      );
+    }
+    foundMission.isOpen = false;
+    await foundMission.save();
+    return res.send({message:`Mission with id ${req.params.id} is closed successfully.`, mission:foundMission});
+  } catch (error) {
+    return next(error);
   }
 };
