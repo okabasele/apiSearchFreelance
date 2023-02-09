@@ -84,8 +84,9 @@ exports.filterFreelances = async (req, res, next) => {
       // console.log(freelance.skills.map(skill => skill.name).join(' '))
       return (
         filterArray &&
-        (
-          filterArray.includes(freelance.skills.map(skill => skill.name).join(' ')) ||
+        (filterArray.includes(
+          freelance.skills.map((skill) => skill.name).join(" ")
+        ) ||
           filterArray.includes(freelance.job.name) ||
           filterArray.includes(freelance.user.firstname) ||
           filterArray.includes(freelance.user.lastname) ||
@@ -93,6 +94,52 @@ exports.filterFreelances = async (req, res, next) => {
       );
     });
     res.send(filteredFreelances);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getFreelance = async (req, res, next) => {
+  try {
+    const foundFreelance = await Freelance.findById(req.params.id);
+    if (!foundFreelance) {
+      return next(new Error("User not found"));
+    }
+    res.send(foundFreelance);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateFreelance = async (req, res, next) => {
+  try {
+    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+      return next(new Error("Not authorized."));
+    }
+    const updatedFreelance = await Freelance.findByIdAndUpdate(
+      req.params.id,
+      req.body
+    );
+    if (!updatedFreelance) {
+      return next(new Error("User not found"));
+    }
+    res.send(updatedFreelance);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteFreelance = async (req, res, next) => {
+  try {
+    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+      return next(new Error("Not authorized."));
+    }
+    const deletedFreelance = await Freelance.findByIdAndDelete(req.params.id);
+    if (!deletedFreelance) {
+      return next(new Error("User not found"));
+    }
+    const deletedUser = await User.findByIdAndDelete(deletedFreelance.user._id);
+    res.send({ deletedFreelance, deletedUser });
   } catch (error) {
     return next(error);
   }

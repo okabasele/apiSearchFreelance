@@ -8,6 +8,9 @@ const {
   validation,
 } = require("../middlewares/validators");
 
+const verifyIsFreelance = require('../middlewares/verifyIsFreelance');
+const verifyToken = require("../middlewares/verifyToken");
+
 router.post(
   "/register",
   checkEmail,
@@ -19,5 +22,8 @@ router.post(
 
 router.get("/all",freelanceController.getAllFreelances);
 router.post("/filter",freelanceController.filterFreelances);
+router.get("/:id",[verifyToken],freelanceController.getFreelance);
+router.patch("/:id",[verifyToken, verifyIsFreelance],freelanceController.updateFreelance);
+router.delete("/:id",[verifyToken, verifyIsFreelance],freelanceController.deleteFreelance);
 
 module.exports = router;
