@@ -113,7 +113,8 @@ exports.getFreelance = async (req, res, next) => {
 
 exports.updateFreelance = async (req, res, next) => {
   try {
-    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+    const foundFreelance = await Freelance.findById(req.params.id);
+    if (!req.userToken.isAdmin && req.userToken.id !== foundFreelance.user._id) {
       return next(new Error("Not authorized."));
     }
     const updatedFreelance = await Freelance.findByIdAndUpdate(
@@ -131,7 +132,8 @@ exports.updateFreelance = async (req, res, next) => {
 
 exports.deleteFreelance = async (req, res, next) => {
   try {
-    if (!req.userToken.isAdmin && req.userToken.id !== req.params.id) {
+    const foundFreelance = await Freelance.findById(req.params.id);
+    if (!req.userToken.isAdmin && req.userToken.id !== foundFreelance.user._id) {
       return next(new Error("Not authorized."));
     }
     const deletedFreelance = await Freelance.findByIdAndDelete(req.params.id);
