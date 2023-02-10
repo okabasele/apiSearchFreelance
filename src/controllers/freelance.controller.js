@@ -55,15 +55,15 @@ exports.register = async (req, res, next) => {
 
     //Envoie de l'email au freelance et à l'admin
     const foundAdmin = await User.findOne({ isAdmin: true });
-    sendMail(
+    await sendMail(
       newUser.email,
       "Inscription réussi dans APISEARCHFREELANCE",
       `Bienvenue dans notre application ${newUser.firstname} ${newUser.lastname}.`
     );
-    sendMail(
+    await sendMail(
       foundAdmin.email,
       "Inscription d'un freelance",
-      `Le freelance ${newUser.email} a crée son compte.`
+      `Le freelance ${newUser.firstname} ${newUser.lastname} ${newUser.email} a crée son compte.`
     );
 
     return res.send(newFreelanceToSave);

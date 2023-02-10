@@ -33,15 +33,15 @@ exports.register = async (req, res, next) => {
     const newCompanyToSave = await newCompany.save();
     //Envoie de l'email au freelance et à l'admin
     const foundAdmin = await User.findOne({ isAdmin: true });
-    sendMail(
+    await sendMail(
       newUser.email,
       "Inscription réussi dans APISEARCHFREELANCE",
       `Bienvenue dans notre application ${newUser.firstname} ${newUser.lastname} de l'entreprise ${newCompanyToSave.name}.`
     );
-    sendMail(
+   await sendMail(
       foundAdmin.email,
       "Inscription d'une entreprise",
-      `L'entreprise ${newCompanyToSave.name} représenté par ${newUser.email} a crée son compte.`
+      `L'entreprise ${newCompanyToSave.name} représenté par ${newUser.firstname} ${newUser.lastname} ${newUser.email} a crée son compte.`
     );
     return res.send(newCompanyToSave);
   } catch (err) {

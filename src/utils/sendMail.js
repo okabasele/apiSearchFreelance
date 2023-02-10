@@ -1,4 +1,5 @@
 const { createTransport } = require("nodemailer");
+
 exports.sendMail = async (emailToSend, subject, message) => {
   try {
     const auth = {
@@ -7,8 +8,8 @@ exports.sendMail = async (emailToSend, subject, message) => {
     };
 
     const transporter = createTransport({
-      port: 465,
-      host: "smtp.gmail.com",
+      port:process.env.NODEMAILER_PORT ,
+      host: process.env.NODEMAILER_HOST,
       auth: {
         user: auth.email,
         pass: auth.password,
