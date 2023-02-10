@@ -10,6 +10,11 @@ const Status = {
   Confirmed: "confirmed",
 };
 
+const Answer = {
+  Yes: "yes",
+  No: "no",
+};
+
 exports.createMission = async (req, res, next) => {
   try {
     if (req.userToken.isAdmin) {
@@ -56,7 +61,7 @@ exports.createMission = async (req, res, next) => {
     foundCompany.missions.push(newMissionToSave._id);
     await foundCompany.save();
 
-    return res.send({ mission: newMissionToSave, creator: req.userToken.id });
+    return res.send({ mission: newMissionToSave });
   } catch (error) {
     next(error);
   }
@@ -161,6 +166,101 @@ exports.addCandidatesToMission = async (req, res, next) => {
   }
 };
 
+exports.answerToMission = async (req, res, next) => {
+  try {
+    //Verifier que la mission existe
+    const foundMission = await Mission.findById(req.params.id)
+      .populate({ path: "job", select: "name" })
+      .populate({
+        path: "company",
+        select: "name",
+      });
+
+    if (!foundMission) {
+      throw new Error(`Mission with id ${foundMission._id} does not exist.`);
+    }
+    //Récuperer le freelance
+    const allFreelances = await Freelance.find().populate({
+      path: "user",
+      select: ["_id", "firstname", "lastname"],
+    });
+    const foundFreelance = allFreelances.find((freelance) => {
+      if (freelance.user._id.toString() === req.userToken.id) {
+        return freelance;
+      }
+      return;
+    });
+
+    if (!foundFreelance) {
+      throw new Error(
+        `Freelance with user id ${req.userToken.id} does not exist.`
+      );
+    }
+
+    //Vérifier si le freelance est dans la mission
+    const isCandidatAlreadyInMission = foundMission.candidates.some(
+      ({ freelance }) => freelance.toString() === foundFreelance._id.toString()
+    );
+
+    if (!isCandidatAlreadyInMission) {
+      throw new Error(
+        `Freelance with id ${foundFreelance._id} is not in Mission with id ${foundMission._id}.`
+      );
+    }
+
+    if (req.body.answer.toLowerCase() === Answer.Yes) {
+      //Si le candidat accepte, on change le status
+      foundMission.candidates = foundMission.candidates.map(
+        ({ freelance, status }) => {
+          if (freelance.toString() === foundFreelance._id.toString()) {
+            return { freelance, status: Status.Confirmed };
+          }
+          return { freelance, status };
+        }
+      );
+      //On sauvegarde le changement
+      await foundMission.save();
+
+      //On notifie l'entreprise de la réponse du candidat
+      const foundCompany = await Company.findById(
+        foundMission.company
+      ).populate({
+        path: "user",
+        select: "email",
+      });
+      await sendMail(
+        foundCompany.user.email,
+        `Réponse d'un candidat pour la mission ${foundMission.title}`,
+        `Le candidat ${foundFreelance.user.firstname} ${foundFreelance.user.lastname} a accepté l'offre de la mission ${foundMission.title}`
+      );
+    } else if (req.body.answer.toLowerCase() === Answer.No) {
+      //Si le candidat refuse, on le supprime de la mission
+      foundMission.candidates = foundMission.candidates.filter(
+        ({ freelance }) =>
+          freelance.toString() !== foundFreelance._id.toString()
+      );
+      //On sauvegarde le changement
+      await foundMission.save();
+
+      //On notifie l'entreprise de la réponse du candidat
+      const foundCompany = await Company.findById(
+        foundMission.company
+      ).populate({
+        path: "user",
+        select: "email",
+      });
+      await sendMail(
+        foundCompany.user.email,
+        `Réponse d'un candidat pour la mission ${foundMission.title}`,
+        `Malheureusement, le candidat ${foundFreelance.user.firstname} ${foundFreelance.user.lastname} a refusé l'offre de la mission ${foundMission.title}`
+      );
+    }
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.closeMission = async (req, res, next) => {
   try {
     //Verifier que la mission existe
@@ -251,13 +351,6 @@ exports.updateMission = async (req, res, next) => {
 
 exports.deleteMission = async (req, res, next) => {
   try {
-    //Recuperer l'entreprise qui a crée la mission
-    const foundCompany = await Company.findOne().populate({
-      path: "missions",
-      select: "_id",
-      match: { _id: { $eq: req.params.id } },
-    });
-
     //Si c'est pas l'admin ou l'entreprise qui a crée la mission on renvoie une erreur
     if (
       !req.userToken.isAdmin &&
@@ -271,7 +364,7 @@ exports.deleteMission = async (req, res, next) => {
       return next(new Error("Mission not found"));
     }
     //Supprimer la mission de l'entreprise
-    const deleteFromCompany = await Company.findById(foundCompany._id);
+    const deleteFromCompany = await Company.findById(deletedMission.company);
     deleteFromCompany.missions = deleteFromCompany.missions.filter(
       ({ _id }) => _id.toString() !== req.params.id
     );
