@@ -207,7 +207,17 @@ exports.answerToMission = async (req, res, next) => {
         `Freelance with id ${foundFreelance._id} is not in Mission with id ${foundMission._id}.`
       );
     }
-
+    //Verifier si le freelance a déja répondu
+    const isCandidatAlreadyAnswered = foundMission.candidates.some(
+      ({ freelance, status }) =>
+        freelance.toString() === foundFreelance._id.toString() &&
+        status === Status.Confirmed
+    );
+    if (isCandidatAlreadyAnswered) {
+      throw new Error(
+        `Freelance with id ${foundFreelance._id} already answered to Mission with id ${foundMission._id}.`
+      );
+    }
     if (req.body.answer.toLowerCase() === Answer.Yes) {
       //Si le candidat accepte, on change le status
       foundMission.candidates = foundMission.candidates.map(
