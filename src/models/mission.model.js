@@ -28,7 +28,13 @@ const missionSchema = mongoose.Schema(
       default: true,
     },
     candidates: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "users", default: [] },
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "users",
+        },
+        status: { type: String, default: "pending" },
+      },
     ],
     skills: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
     job: { type: mongoose.Schema.Types.ObjectId, ref: "jobs" },

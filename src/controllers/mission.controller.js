@@ -3,6 +3,12 @@ const Mission = require("../models/mission.model");
 const Job = require("../models/job.model");
 const Skill = require("../models/skill.model");
 const Freelance = require("../models/freelance.model");
+const { sendMail } = require("../utils/sendMail");
+
+const Status = {
+  Pending: "pending",
+  Confirmed: "confirmed",
+};
 
 exports.createMission = async (req, res, next) => {
   try {
@@ -84,12 +90,12 @@ exports.addCandidatesToMission = async (req, res, next) => {
     //Verifier les candidats deja presents dans la mission
     const candidatesAlreadyInMission = [];
     const isCandidatAlreadyInMission = foundMission.candidates.some(
-      (candidateId) => {
+      ({user}) => {
         const isAlreadyInMission = uniqueCandidatesIds.includes(
-          candidateId.toString()
+          user.toString()
         );
         if (isAlreadyInMission) {
-          candidatesAlreadyInMission.push(candidateId.toString());
+          candidatesAlreadyInMission.push(user.toString());
         }
         return isAlreadyInMission;
       }
@@ -112,15 +118,18 @@ exports.addCandidatesToMission = async (req, res, next) => {
         if (!foundFreelance) {
           throw new Error(`freelance with id ${freelanceId} does not exist.`);
         }
-        return foundFreelance._id;
+        //return foundFreelance._id;
+        return { user: foundFreelance._id, status: Status.Pending };
       } catch (error) {
         throw error;
       }
     });
 
     const foundFreelances = await Promise.all(candidatesPromises);
+
     foundMission.candidates = foundFreelances;
     await foundMission.save();
+    //Envoyer les mails aux candidats et à l'entreprise qui a crée la mission
     res.send(foundMission);
   } catch (error) {
     next(error);
