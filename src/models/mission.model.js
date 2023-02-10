@@ -29,15 +29,17 @@ const missionSchema = mongoose.Schema(
     },
     candidates: [
       {
-        user: {
+        freelance: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "users",
+          ref: "freelances",
         },
         status: { type: String, default: "pending" },
       },
     ],
     skills: [{ type: mongoose.Schema.Types.ObjectId, ref: "skills" }],
     job: { type: mongoose.Schema.Types.ObjectId, ref: "jobs" },
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "companies" },
+
   },
   { timestamps: true }
 );

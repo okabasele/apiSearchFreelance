@@ -12,6 +12,12 @@ const Status = {
 
 exports.createMission = async (req, res, next) => {
   try {
+    if (req.userToken.isAdmin) {
+      return next("Only companies can create missions.");
+    }
+    //Trouver l'entreprise qui a crée la mission
+    const foundCompany = await Company.findOne({ user: req.userToken.id });
+
     //Verifier que le Job id et les Skills id existent
     const foundJob = await Job.findById(req.body.job);
     if (!foundJob) {
@@ -41,16 +47,15 @@ exports.createMission = async (req, res, next) => {
       description: req.body.description,
       skills: foundSkills,
       job: foundJob._id,
+      company: foundCompany._id,
     });
 
     const newMissionToSave = await newMission.save();
 
     //ajouter la mission a l'entreprise
-    if (req.userToken.role == "company") {
-      const foundCompany = await Company.findOne({ user: req.userToken.id });
-      foundCompany.missions.push(newMissionToSave._id);
-      await foundCompany.save();
-    }
+    foundCompany.missions.push(newMissionToSave._id);
+    await foundCompany.save();
+
     return res.send({ mission: newMissionToSave, creator: req.userToken.id });
   } catch (error) {
     next(error);
@@ -60,7 +65,12 @@ exports.createMission = async (req, res, next) => {
 exports.addCandidatesToMission = async (req, res, next) => {
   try {
     //Verifier que la mission existe
-    const foundMission = await Mission.findById(req.params.id);
+    const foundMission = await Mission.findById(req.params.id)
+      .populate({ path: "job", select: "name" })
+      .populate({
+        path: "company",
+        select: "name",
+      });
     if (!foundMission) {
       return next(
         new Error(`Mission with id ${req.params.id} does not exist.`)
@@ -90,12 +100,12 @@ exports.addCandidatesToMission = async (req, res, next) => {
     //Verifier les candidats deja presents dans la mission
     const candidatesAlreadyInMission = [];
     const isCandidatAlreadyInMission = foundMission.candidates.some(
-      ({user}) => {
+      ({ freelance }) => {
         const isAlreadyInMission = uniqueCandidatesIds.includes(
-          user.toString()
+          freelance.toString()
         );
         if (isAlreadyInMission) {
-          candidatesAlreadyInMission.push(user.toString());
+          candidatesAlreadyInMission.push(freelance.toString());
         }
         return isAlreadyInMission;
       }
@@ -111,15 +121,18 @@ exports.addCandidatesToMission = async (req, res, next) => {
         )
       );
     }
-    //Verifier le tableau d'id user des freelances a ajouter
+    //Verifier le tableau d'id des freelances a ajouter
     const candidatesPromises = uniqueCandidatesIds.map(async (freelanceId) => {
       try {
-        const foundFreelance = await Freelance.findById(freelanceId);
+        const foundFreelance = await Freelance.findById(freelanceId).populate({
+          path: "user",
+          select: "email",
+        });
         if (!foundFreelance) {
           throw new Error(`freelance with id ${freelanceId} does not exist.`);
         }
         //return foundFreelance._id;
-        return { user: foundFreelance._id, status: Status.Pending };
+        return { freelance: foundFreelance, status: Status.Pending };
       } catch (error) {
         throw error;
       }
@@ -127,9 +140,21 @@ exports.addCandidatesToMission = async (req, res, next) => {
 
     const foundFreelances = await Promise.all(candidatesPromises);
 
-    foundMission.candidates = foundFreelances;
+    foundMission.candidates = foundFreelances.map((foundFreelance) => ({
+      freelance: foundFreelance.freelance._id,
+      status: foundFreelance.status,
+    }));
+
     await foundMission.save();
+
     //Envoyer les mails aux candidats et à l'entreprise qui a crée la mission
+    foundFreelances.forEach(({ freelance }) =>
+      sendMail(
+        freelance.user.email,
+        `Proposition d'offre pour le poste de ${foundMission.job.name}`,
+        `L'entreprise ${foundMission.company.name} souhaite vous proposez le poste de ${foundMission.job.name}.`
+      )
+    );
     res.send(foundMission);
   } catch (error) {
     next(error);
@@ -232,6 +257,7 @@ exports.deleteMission = async (req, res, next) => {
       select: "_id",
       match: { _id: { $eq: req.params.id } },
     });
+
     //Si c'est pas l'admin ou l'entreprise qui a crée la mission on renvoie une erreur
     if (
       !req.userToken.isAdmin &&
@@ -239,10 +265,18 @@ exports.deleteMission = async (req, res, next) => {
     ) {
       return next(new Error("Not authorized."));
     }
+    //Supprimer la mission
     const deletedMission = await Mission.findByIdAndDelete(req.params.id);
     if (!deletedMission) {
       return next(new Error("Mission not found"));
     }
+    //Supprimer la mission de l'entreprise
+    const deleteFromCompany = await Company.findById(foundCompany._id);
+    deleteFromCompany.missions = deleteFromCompany.missions.filter(
+      ({ _id }) => _id.toString() !== req.params.id
+    );
+    deleteFromCompany.save();
+
     res.send({ deletedMission });
   } catch (error) {
     return next(error);
