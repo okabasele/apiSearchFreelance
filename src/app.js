@@ -7,6 +7,22 @@ const errorHandler = require("./middlewares/errorHandling");
 app.use(express.json());
 app.use('/api/v1', apiRouter);
 app.use(errorHandler);
+const swaggerAutogen = require('swagger-autogen')();
+
+const doc = {
+  info: {
+    title: 'APISearchFreelance',
+    description: 'Description',
+  },
+  host: 'localhost:3000',
+  schemes: ['http'],
+};
+
+
+const outputFile = './swagger-output.json';
+const endpointsFiles = ['./src/routes/index.js'];
+swaggerAutogen(outputFile, endpointsFiles, doc);
+
 
 const port = process.env.PORT;
 const mongodb_user = process.env.MONGODB_USER;
