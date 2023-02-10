@@ -1,5 +1,6 @@
 const Company = require("../models/company.model");
 const User = require("../models/user.model");
+const { sendMail } = require("../utils/sendMail");
 
 exports.register = async (req, res, next) => {
   try {
@@ -30,6 +31,18 @@ exports.register = async (req, res, next) => {
     });
 
     const newCompanyToSave = await newCompany.save();
+    //Envoie de l'email au freelance et à l'admin
+    const foundAdmin = await User.findOne({ isAdmin: true });
+    sendMail(
+      newUser.email,
+      "Inscription réussi dans APISEARCHFREELANCE",
+      `Bienvenue dans notre application ${newUser.firstname} ${newUser.lastname} de l'entreprise ${newCompanyToSave.name}.`
+    );
+    sendMail(
+      foundAdmin.email,
+      "Inscription d'une entreprise",
+      `L'entreprise ${newCompanyToSave.name} représenté par ${newUser.email} a crée son compte.`
+    );
     return res.send(newCompanyToSave);
   } catch (err) {
     return next(err);

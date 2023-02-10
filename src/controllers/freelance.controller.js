@@ -2,6 +2,7 @@ const Freelance = require("../models/freelance.model");
 const User = require("../models/user.model");
 const Job = require("../models/job.model");
 const Skill = require("../models/skill.model");
+const { sendMail } = require("../utils/sendMail");
 
 exports.register = async (req, res, next) => {
   try {
@@ -51,6 +52,20 @@ exports.register = async (req, res, next) => {
     });
 
     const newFreelanceToSave = await newFreelance.save();
+
+    //Envoie de l'email au freelance et à l'admin
+    const foundAdmin = await User.findOne({ isAdmin: true });
+    sendMail(
+      newUser.email,
+      "Inscription réussi dans APISEARCHFREELANCE",
+      `Bienvenue dans notre application ${newUser.firstname} ${newUser.lastname}.`
+    );
+    sendMail(
+      foundAdmin.email,
+      "Inscription d'un freelance",
+      `Le freelance ${newUser.email} a crée son compte.`
+    );
+
     return res.send(newFreelanceToSave);
   } catch (err) {
     return next(err);
@@ -114,7 +129,10 @@ exports.getFreelance = async (req, res, next) => {
 exports.updateFreelance = async (req, res, next) => {
   try {
     const foundFreelance = await Freelance.findById(req.params.id);
-    if (!req.userToken.isAdmin && req.userToken.id !== foundFreelance.user._id) {
+    if (
+      !req.userToken.isAdmin &&
+      req.userToken.id !== foundFreelance.user._id
+    ) {
       return next(new Error("Not authorized."));
     }
     const updatedFreelance = await Freelance.findByIdAndUpdate(
@@ -133,7 +151,10 @@ exports.updateFreelance = async (req, res, next) => {
 exports.deleteFreelance = async (req, res, next) => {
   try {
     const foundFreelance = await Freelance.findById(req.params.id);
-    if (!req.userToken.isAdmin && req.userToken.id !== foundFreelance.user._id) {
+    if (
+      !req.userToken.isAdmin &&
+      req.userToken.id !== foundFreelance.user._id
+    ) {
       return next(new Error("Not authorized."));
     }
     const deletedFreelance = await Freelance.findByIdAndDelete(req.params.id);
